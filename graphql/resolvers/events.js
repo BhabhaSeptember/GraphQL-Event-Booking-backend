@@ -1,4 +1,6 @@
 const Event = require("../../models/event");
+const User = require("../../models/user");
+
 const { transformEvent } = require("./merge");
 
 
@@ -16,19 +18,23 @@ module.exports = {
       }
     },
   
-    createEvent: async (args) => {
+    createEvent: async (args, req) => {
+        if (!req.isAuth) {
+            throw new Error("Unauthenticated!")
+        }
+
       const event = new Event({
         title: args.eventInput.title,
         description: args.eventInput.description,
         price: +args.eventInput.price, //+ convert to float number
         date: new Date(args.eventInput.date),
-        creator: "67a2572df62d82bc09a74164",
+        creator: req.userId,
       });
       let createdEvent;
       try {
         const result = await event.save(); //mongoose method
         createdEvent = transformEvent(result);
-        const creator = await User.findById("67a2572df62d82bc09a74164");
+        const creator = await User.findById(req.userId);
         if (!creator) {
           throw new Error("User does not exist!");
         }
